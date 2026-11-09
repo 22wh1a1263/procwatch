@@ -16,8 +16,12 @@ var static embed.FS
 
 const procRoot = "/proc"
 
-// Handler returns the HTTP handler used by both the server and the Vercel function.
-func Handler() http.Handler {
+// Handler returns the HTTP handler, reporting disk usage for "/".
+func Handler() http.Handler { return HandlerWithDisk("/") }
+
+// HandlerWithDisk is like Handler but reports disk usage for diskPath. The Vercel
+// function uses /tmp because its root filesystem is read-only and shows no free space.
+func HandlerWithDisk(diskPath string) http.Handler {
 	mux := http.NewServeMux()
 	sub, _ := fs.Sub(static, ".")
 	mux.Handle("/", http.FileServer(http.FS(sub)))
@@ -25,7 +29,7 @@ func Handler() http.Handler {
 		w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("/api/snapshot", func(w http.ResponseWriter, _ *http.Request) {
-		s, err := sysinfo.CollectSnapshot(procRoot, "/")
+		s, err := sysinfo.CollectSnapshot(procRoot, diskPath)
 		writeJSON(w, s, err)
 	})
 	mux.HandleFunc("/api/top", func(w http.ResponseWriter, r *http.Request) {

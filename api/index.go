@@ -4,11 +4,17 @@ package handler
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/22wh1a1263/procwatch/web"
 )
 
-var h = web.Handler()
+var h = func() http.Handler {
+	if os.Getenv("VERCEL") != "" {
+		return web.HandlerWithDisk("/tmp") // root filesystem is read-only on Vercel
+	}
+	return web.Handler()
+}()
 
 // Handler serves the status page and JSON API.
 func Handler(w http.ResponseWriter, r *http.Request) {

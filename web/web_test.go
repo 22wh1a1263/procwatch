@@ -54,3 +54,16 @@ func TestIndexPage(t *testing.T) {
 		t.Fatalf("index page not served: %d", rec.Code)
 	}
 }
+
+func TestHandlerWithDiskUsesGivenPath(t *testing.T) {
+	rec := httptest.NewRecorder()
+	HandlerWithDisk("/tmp").ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/snapshot", nil))
+	var m struct {
+		Disk struct {
+			Path string `json:"path"`
+		} `json:"disk"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &m); err != nil || m.Disk.Path != "/tmp" {
+		t.Fatalf("got %q, %v", m.Disk.Path, err)
+	}
+}
