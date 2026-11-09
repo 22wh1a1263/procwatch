@@ -1,0 +1,21 @@
+name: procwatch
+base: core22
+version: '0.1.0'
+summary: Small Linux system health tool that reads /proc
+description: |
+  procwatch prints a snapshot of uptime, load, memory and disk usage,
+  lists the top processes by memory, shows listening TCP ports, and can
+  run threshold checks for use in cron or CI.
+grade: devel
+confinement: strict
+
+apps:
+  procwatch:
+    command: bin/procwatch
+    plugs: [system-observe, network-observe]
+
+parts:
+  procwatch:
+    plugin: go
+    source: .
+    build-snaps: [go/1.22/stable]
