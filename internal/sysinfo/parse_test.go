@@ -126,3 +126,20 @@ func TestDiskUsage(t *testing.T) {
 		t.Fatal("expected error for missing path")
 	}
 }
+
+func TestListeningPortsEmptyIsNotNil(t *testing.T) {
+	ps, err := ListeningPorts(t.TempDir()) // no net/tcp files at all
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ps == nil || len(ps) != 0 {
+		t.Fatalf("want empty non-nil slice, got %#v", ps)
+	}
+}
+
+func TestTopProcessesEmptyIsNotNil(t *testing.T) {
+	ps, err := TopProcesses(t.TempDir(), 5)
+	if err != nil || ps == nil {
+		t.Fatalf("want empty non-nil slice, got %#v, %v", ps, err)
+	}
+}

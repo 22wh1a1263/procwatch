@@ -80,7 +80,7 @@ func TopProcesses(procRoot string, n int) ([]Process, error) {
 	if err != nil {
 		return nil, err
 	}
-	var procs []Process
+	procs := []Process{}
 	for _, e := range entries {
 		pid, err := strconv.Atoi(e.Name())
 		if err != nil {
@@ -110,7 +110,7 @@ func TopProcesses(procRoot string, n int) ([]Process, error) {
 
 // ListeningPorts returns TCP sockets in LISTEN state (IPv4 and IPv6), sorted by port.
 func ListeningPorts(procRoot string) ([]Port, error) {
-	var all []Port
+	all := []Port{}
 	for _, fam := range []string{"tcp", "tcp6"} {
 		t, err := readFile(filepath.Join(procRoot, "net", fam))
 		if err != nil {

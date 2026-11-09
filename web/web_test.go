@@ -67,3 +67,11 @@ func TestHandlerWithDiskUsesGivenPath(t *testing.T) {
 		t.Fatalf("got %q, %v", m.Disk.Path, err)
 	}
 }
+
+func TestEmptyListsEncodeAsArrays(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeJSON(rec, []int{}, nil)
+	if strings.TrimSpace(rec.Body.String()) != "[]" {
+		t.Fatalf("got %q", rec.Body.String())
+	}
+}
