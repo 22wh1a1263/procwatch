@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>procwatch</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 16px; background: #0f1115; color: #e6e6e6; }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  p.note { color: #9aa0a6; margin: 0 0 16px; font-size: .9rem; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+  .card { background: #181b22; border-radius: 8px; padding: 12px; }
+  .card b { display: block; font-size: 1.3rem; }
+  .card span { color: #9aa0a6; font-size: .8rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #262a33; }
+  h2 { font-size: 1rem; margin: 16px 0 4px; }
+  code { color: #8ab4f8; }
+</style>
+</head>
+<body>
+<main>
+  <h1>procwatch</h1>
+  <p class="note">Live output from the server this page runs on, read from <code>/proc</code>. It updates every 5 seconds.</p>
+  <div class="grid">
+    <div class="card"><b id="mem">-</b><span>memory used</span></div>
+    <div class="card"><b id="load">-</b><span>load (1 / 5 / 15 min)</span></div>
+    <div class="card"><b id="disk">-</b><span>disk used</span></div>
+    <div class="card"><b id="up">-</b><span>uptime</span></div>
+  </div>
+  <h2>Top processes by memory</h2>
+  <table><thead><tr><th>PID</th><th>Name</th><th>RSS (MB)</th></tr></thead><tbody id="top"></tbody></table>
+  <h2>Listening ports</h2>
+  <table><thead><tr><th>Port</th><th>Address</th></tr></thead><tbody id="ports"></tbody></table>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+async function get(path) { const r = await fetch(path); if (!r.ok) throw new Error(path + " " + r.status); return r.json(); }
+function rows(el, items) {
+  el.replaceChildren(...items.map((cells) => {
+    const tr = document.createElement("tr");
+    cells.forEach((c) => { const td = document.createElement("td"); td.textContent = c; tr.append(td); });
+    return tr;
+  }));
+}
+async function refresh() {
+  try {
+    const [s, top, ports] = await Promise.all([get("api/snapshot"), get("api/top"), get("api/ports")]);
+    $("mem").textContent = s.memory.used_percent.toFixed(1) + "%";
+    $("load").textContent = [s.load.one, s.load.five, s.load.fifteen].map((x) => x.toFixed(2)).join(" / ");
+    $("disk").textContent = s.disk.used_percent.toFixed(1) + "%";
+    $("up").textContent = (s.uptime_seconds / 3600).toFixed(1) + " h";
+    rows($("top"), top.map((p) => [p.pid, p.name, Math.round(p.rss_kb / 1024)]));
+    rows($("ports"), ports.map((p) => [p.port, p.address]));
+  } catch (e) { $("mem").textContent = "error"; console.error(e); }
+}
+refresh(); setInterval(refresh, 5000);
+</script>
+</body>
+</html>

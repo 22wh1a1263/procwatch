@@ -18,6 +18,7 @@ Usage:
   procwatch top      [--json] [-n COUNT]
   procwatch ports    [--json]
   procwatch check    [--max-mem PCT] [--max-disk PCT] [--max-load N]
+  procwatch serve    [--addr :8080]   web page and JSON API
 
 Exit codes: 0 ok, 1 error, 2 check failed.
 `
@@ -38,6 +39,8 @@ func main() {
 		err = runPorts(os.Args[2:])
 	case "check":
 		code, err = runCheck(os.Args[2:])
+	case "serve":
+		err = runServe(os.Args[2:])
 	case "-h", "--help", "help":
 		fmt.Print(usage)
 	default:

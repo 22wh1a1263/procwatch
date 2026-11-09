@@ -19,6 +19,7 @@ disk /   88.5% used (28 GB free)
 | `procwatch top [--json] [-n COUNT]` | Processes using the most resident memory |
 | `procwatch ports [--json]` | Listening TCP sockets (IPv4 and IPv6) |
 | `procwatch check [--max-mem PCT] [--max-disk PCT] [--max-load N]` | Threshold check; exits 2 if one fails |
+| `procwatch serve [--addr :8080]` | Web status page and JSON API (`/api/snapshot`, `/api/top`, `/api/ports`, `/healthz`) |
 
 ## How it works
 - Reads `/proc/meminfo`, `/proc/loadavg`, `/proc/uptime`, `/proc/<pid>/status` and `/proc/net/tcp{,6}`.
@@ -40,13 +41,21 @@ make health
 ```
 Requires Go 1.22 or newer. Linux only.
 
+## Web mode and deployment
+`procwatch serve` shows the same data in a small web page and as JSON. It reports the machine it runs on, so a hosted copy shows the host's stats, not yours.
+- **Render:** `Dockerfile` and `render.yaml` are included. Create a Web Service from this repo with the Docker runtime. The free plan sleeps when idle, so the first request can be slow.
+- **Vercel:** `api/index.go` is a Go serverless function that serves the same handler, with `vercel.json` rewriting all paths to it. Values come from the serverless container, so they reflect that environment.
+
 ## Packaging
 `snap/snapcraft.yaml` defines a snap with the `system-observe` and `network-observe` plugs.
 It has not been built or published yet; build it with `snapcraft`.
 
 ## Layout
 ```
-cmd/procwatch/        command-line entry point
+cmd/procwatch/        command-line entry point (snapshot, top, ports, check, serve)
+web/                  HTTP handler, JSON API and status page (with tests)
+api/index.go          Vercel serverless entry point
+Dockerfile, render.yaml  Render deployment
 internal/sysinfo/     /proc parsers and collectors, with tests
 scripts/health.sh     Bash wrapper for cron/CI
 snap/snapcraft.yaml   snap packaging definition
